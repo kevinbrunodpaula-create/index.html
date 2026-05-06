@@ -1,48 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>KR7</title>
+<title>KR7 PERFORMANCE</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<style>
+body {
+  background: #000;
+  color: #fff;
+  font-family: Arial;
+  text-align: center;
+}
+
+h1 {
+  margin-top: 30px;
+}
+
+input {
+  padding: 8px;
+  margin: 5px;
+  width: 120px;
+}
+
+button {
+  padding: 10px 20px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.card {
+  background: #111;
+  margin: 20px auto;
+  padding: 20px;
+  width: 300px;
+  border-radius: 10px;
+}
+
+</style>
 </head>
 
-<body style="background:black;color:white;text-align:center">
+<body>
 
 <h1>KR7 PERFORMANCE</h1>
 
-<input id="valor" placeholder="Digite valor">
-<button id="btn">Atualizar</button>
+<h3>META TOTAL: R$ 2.000.000</h3>
 
-<div id="status"></div>
+<div id="ranking"></div>
+
+<br><br>
+
+<div>
+  <input id="nome" placeholder="Nome">
+  <input id="valor" placeholder="Valor">
+  <button onclick="salvar()">Salvar</button>
+</div>
 
 <script>
 
-// 🔥 CRIA APENAS UMA VEZ
-const client = window.supabase.createClient(
+const supabase = window.supabase.createClient(
   "https://fjysqoqglqlpfxvxvvzt.supabase.co",
   "sb_publishable_5OYsGs28d5eh9pBbOTBa6Q_YepVgSYV"
-);
+)
 
-// 🔥 BOTÃO FUNCIONANDO
-document.getElementById("btn").addEventListener("click", async function(){
+// SALVAR DADOS
+async function salvar() {
+  const nome = document.getElementById("nome").value
+  const valor = parseFloat(document.getElementById("valor").value)
 
-  let v = Number(document.getElementById("valor").value);
-
-  const { error } = await client
-    .from("ranking")
-    .update({ hype: v })
-    .eq("id", 1);
-
-  if(error){
-    document.getElementById("status").innerText = "ERRO: " + error.message;
-    console.log(error);
-  }else{
-    document.getElementById("status").innerText = "SALVO COM SUCESSO";
+  if (!nome || !valor) {
+    alert("Preencha tudo")
+    return
   }
 
-});
+  const { error } = await supabase
+    .from("ranking")
+    .upsert({ nome, valor })
+
+  if (error) {
+    alert("Erro ao salvar")
+    console.log(error)
+  } else {
+    alert("Salvo com sucesso")
+    carregar()
+  }
+}
+
+// CARREGAR RANKING
+async function carregar() {
+  const { data } = await supabase
+    .from("ranking")
+    .select("*")
+    .order("valor", { ascending: false })
+
+  let html = ""
+
+  data.forEach((item, i) => {
+    html += `
+      <div class="card">
+        <h2>${i+1}º - ${item.nome}</h2>
+        <p>R$ ${item.valor.toLocaleString()}</p>
+      </div>
+    `
+  })
+
+  document.getElementById("ranking").innerHTML = html
+}
+
+carregar()
 
 </script>
 
