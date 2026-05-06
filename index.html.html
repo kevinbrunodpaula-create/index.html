@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>KR7 Premium</title>
+
+<style>
+body {
+  margin:0;
+  font-family:-apple-system, BlinkMacSystemFont;
+  background:#0d0d0d;
+  color:#fff;
+  text-align:center;
+}
+
+h1 {
+  font-size:42px;
+  margin-top:20px;
+}
+
+.meta {
+  font-size:18px;
+  color:#aaa;
+}
+
+.container {
+  margin-top:20px;
+}
+
+.ranking-box {
+  display:flex;
+  justify-content:space-around;
+  margin-top:30px;
+}
+
+.ranking {
+  width:40%;
+  background:#1a1a1a;
+  border-radius:20px;
+  padding:25px;
+  box-shadow:0 0 20px rgba(0,0,0,0.5);
+}
+
+.ranking h3 {
+  font-size:26px;
+  margin-bottom:20px;
+}
+
+.rank-item {
+  font-size:24px;
+  margin:12px 0;
+  transition:0.3s;
+}
+
+.rank-item:hover {
+  transform:scale(1.05);
+}
+
+.progress-bar {
+  height:12px;
+  background:#222;
+  border-radius:10px;
+  margin:10px 0;
+}
+
+.progress {
+  height:100%;
+  border-radius:10px;
+  background:linear-gradient(90deg,#fff,#777);
+  width:0%;
+  transition:0.5s;
+}
+
+.total {
+  font-size:26px;
+  margin-top:20px;
+}
+
+.toggle {
+  position:fixed;
+  bottom:10px;
+  right:10px;
+  background:#fff;
+  color:#000;
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.control {
+  position:fixed;
+  bottom:0;
+  width:100%;
+  background:#111;
+  padding:15px;
+  display:none;
+}
+
+input {
+  width:90px;
+  padding:6px;
+  margin:3px;
+  border-radius:6px;
+  border:none;
+}
+</style>
+</head>
+
+<body>
+
+<h1>KR7 PERFORMANCE</h1>
+<div class="meta">META TOTAL: R$ 2.000.000,00</div>
+
+<div class="container">
+
+  <div class="ranking-box">
+
+    <div class="ranking">
+      <h3>🏆 HYPE</h3>
+      <div class="progress-bar"><div class="progress" id="barHype"></div></div>
+      <div id="rankingHype"></div>
+    </div>
+
+    <div class="ranking">
+      <h3>🏆 OUTROS</h3>
+      <div class="progress-bar"><div class="progress" id="barGeral"></div></div>
+      <div id="rankingGeral"></div>
+    </div>
+
+  </div>
+
+  <div class="total" id="total"></div>
+
+</div>
+
+<div class="toggle" onclick="toggleControl()">⚙️</div>
+
+<div class="control" id="control">
+
+  DAN <input id="d_h"> <input id="d_g">
+  EMA <input id="e_h"> <input id="e_g">
+  FLA <input id="f_h"> <input id="f_g">
+  LUC <input id="l_h"> <input id="l_g">
+  OLI <input id="o_h"> <input id="o_g">
+
+  <button onclick="atualizar()">Atualizar</button>
+
+</div>
+
+<script>
+
+const META_HYPE = 1000000;
+const META_GERAL = 1000000;
+
+function formatar(v){
+  return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+
+function toggleControl(){
+  let c = document.getElementById("control");
+  c.style.display = c.style.display === "none" ? "block" : "none";
+}
+
+function atualizar(){
+
+  let corretores = [
+    { nome:"DANIELLA", hype:+d_h.value||0, geral:+d_g.value||0 },
+    { nome:"EMANUEL", hype:+e_h.value||0, geral:+e_g.value||0 },
+    { nome:"FLÁVIO", hype:+f_h.value||0, geral:+f_g.value||0 },
+    { nome:"LUCIANO", hype:+l_h.value||0, geral:+l_g.value||0 },
+    { nome:"OLIVEIRA", hype:+o_h.value||0, geral:+o_g.value||0 }
+  ];
+
+  let total=0,hype=0,geral=0;
+
+  corretores.forEach(c=>{
+    total+=c.hype+c.geral;
+    hype+=c.hype;
+    geral+=c.geral;
+  });
+
+  document.getElementById("total").innerText = "TOTAL: " + formatar(total);
+
+  document.getElementById("barHype").style.width = (hype/META_HYPE*100)+"%";
+  document.getElementById("barGeral").style.width = (geral/META_GERAL*100)+"%";
+
+  let hypeRank=[...corretores].sort((a,b)=>b.hype-a.hype);
+  let geralRank=[...corretores].sort((a,b)=>b.geral-a.geral);
+
+  let htmlH="",htmlG="";
+  let pos=["🥇","🥈","🥉","4º","5º"];
+
+  hypeRank.forEach((c,i)=>{
+    htmlH+=`<div class="rank-item">${pos[i]} ${c.nome} - ${formatar(c.hype)}</div>`;
+  });
+
+  geralRank.forEach((c,i)=>{
+    htmlG+=`<div class="rank-item">${pos[i]} ${c.nome} - ${formatar(c.geral)}</div>`;
+  });
+
+  document.getElementById("rankingHype").innerHTML=htmlH;
+  document.getElementById("rankingGeral").innerHTML=htmlG;
+}
+
+</script>
+
+</body>
+</html>
