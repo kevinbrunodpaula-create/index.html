@@ -7,81 +7,31 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:-apple-system;
-  background:#0b0b0b;
-  color:#fff;
-  text-align:center;
-}
-
-h1{
-  margin-top:20px;
-  font-size:40px;
-}
-
-.meta{
-  margin-top:10px;
-  color:#aaa;
-}
-
-.container{
-  display:flex;
-  justify-content:space-around;
-  margin-top:40px;
-}
-
-.box{
-  width:40%;
-  background:#1a1a1a;
-  padding:20px;
-  border-radius:20px;
-}
-
-.rank{
-  margin:10px 0;
-  font-size:20px;
-}
-
-.total{
-  margin-top:30px;
-  font-size:22px;
-}
-
-.control{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  background:#111;
-  padding:10px;
-}
-
-input{
-  width:90px;
-}
+body{background:#0b0b0b;color:#fff;font-family:Arial;text-align:center}
+.box{display:flex;justify-content:space-around;margin-top:40px}
+.col{width:40%;background:#1a1a1a;padding:20px;border-radius:20px}
+input{width:80px}
+.control{position:fixed;bottom:0;width:100%;background:#111;padding:10px}
 </style>
 </head>
 
 <body>
 
 <h1>KR7 PERFORMANCE</h1>
-<div class="meta">META TOTAL: R$ 2.000.000,00</div>
+<p>META TOTAL: R$ 2.000.000</p>
 
-<div class="container">
-
-  <div class="box">
-    <h2>🏆 HYPE (META 1MM)</h2>
+<div class="box">
+  <div class="col">
+    <h2>HYPE</h2>
     <div id="hype"></div>
   </div>
-
-  <div class="box">
-    <h2>🏆 OUTROS (META 1MM)</h2>
+  <div class="col">
+    <h2>OUTROS</h2>
     <div id="geral"></div>
   </div>
-
 </div>
 
-<div class="total" id="total">TOTAL: R$ 0,00</div>
+<h3 id="total">TOTAL: R$ 0</h3>
 
 <div class="control">
   DAN <input id="d_h"> <input id="d_g">
@@ -94,10 +44,10 @@ input{
 
 <script>
 
-const supabaseUrl = "https://fjysqoqglqlpfxvxvvzt.supabase.co";
-const supabaseKey = "sb_publishable_5OYsGs28d5eh9pBbOTBa6Q_YepVgSYV";
-
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+const supabase = window.supabase.createClient(
+  "https://fjysqoqglqlpfxvxvvzt.supabase.co",
+  "sb_publishable_5OYsGs28d5eh9pBbOTBa6Q_YepVgSYV"
+);
 
 function moeda(v){
   return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -108,45 +58,30 @@ function parse(v){
   return Number(v.replace(/\./g,"").replace(",","."));
 }
 
-// 🔥 CARREGAR
 async function carregar(){
-
-  const { data, error } = await supabase
-    .from("ranking")
-    .select("*");
-
-  if(error){
-    console.log(error);
-    return;
-  }
-
-  if(data){
-    render(data);
-  }
+  const { data } = await supabase.from("ranking").select("*");
+  if(data) render(data);
 }
 
-// 🔥 RENDER
 function render(lista){
-
   let pos=["🥇","🥈","🥉","4º","5º"];
 
-  let hype = [...lista].sort((a,b)=>b.hype-a.hype);
-  let geral = [...lista].sort((a,b)=>b.geral-a.geral);
+  let h=[...lista].sort((a,b)=>b.hype-a.hype);
+  let g=[...lista].sort((a,b)=>b.geral-a.geral);
 
   document.getElementById("hype").innerHTML =
-    hype.map((c,i)=><div class="rank">${pos[i]} ${c.nome} - ${moeda(c.hype)}</div>).join("");
+    h.map((c,i)=>${pos[i]} ${c.nome} - ${moeda(c.hype)}).join("<br>");
 
   document.getElementById("geral").innerHTML =
-    geral.map((c,i)=><div class="rank">${pos[i]} ${c.nome} - ${moeda(c.geral)}</div>).join("");
+    g.map((c,i)=>${pos[i]} ${c.nome} - ${moeda(c.geral)}).join("<br>");
 
   let total = lista.reduce((s,c)=>s+c.hype+c.geral,0);
   document.getElementById("total").innerHTML = "TOTAL: " + moeda(total);
 }
 
-// 🔥 SALVAR (CORRIGIDO)
 async function atualizar(){
 
-  let dados = [
+  let valores = [
     parse(d_h.value), parse(d_g.value),
     parse(e_h.value), parse(e_g.value),
     parse(f_h.value), parse(f_g.value),
@@ -154,21 +89,14 @@ async function atualizar(){
     parse(o_h.value), parse(o_g.value)
   ];
 
-  let nomes = ["DANIELLA","EMANUEL","FLÁVIO","LUCIANO","OLIVEIRA"];
-
   for(let i=0;i<5;i++){
-
-    let { error } = await supabase
+    await supabase
       .from("ranking")
       .update({
-        hype: dados[i*2],
-        geral: dados[i*2+1]
+        hype: valores[i*2],
+        geral: valores[i*2+1]
       })
       .eq("id", i+1);
-
-    if(error){
-      console.log("ERRO:", error);
-    }
   }
 
   setTimeout(carregar,1000);
