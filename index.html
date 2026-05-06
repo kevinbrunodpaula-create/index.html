@@ -2,40 +2,53 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>KR7 Ranking</title>
+<title>KR7 Performance</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body {
+body{
   margin:0;
-  font-family:-apple-system, sans-serif;
-  background:#0d0d0d;
+  font-family:-apple-system;
+  background:#0b0b0b;
   color:#fff;
   text-align:center;
 }
 
-h1 { margin-top:20px; }
+h1{
+  margin-top:20px;
+  font-size:40px;
+}
 
-.ranking-box {
+.meta{
+  margin-top:10px;
+  color:#aaa;
+}
+
+.container{
   display:flex;
   justify-content:space-around;
-  margin-top:30px;
+  margin-top:40px;
 }
 
-.ranking {
+.box{
   width:40%;
   background:#1a1a1a;
-  border-radius:20px;
   padding:20px;
+  border-radius:20px;
 }
 
-.rank-item {
+.rank{
+  margin:10px 0;
   font-size:20px;
-  margin:8px 0;
 }
 
-.control {
+.total{
+  margin-top:30px;
+  font-size:22px;
+}
+
+.control{
   position:fixed;
   bottom:0;
   width:100%;
@@ -43,30 +56,32 @@ h1 { margin-top:20px; }
   padding:10px;
 }
 
-input {
-  width:80px;
-  margin:3px;
+input{
+  width:90px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>KR7 RANKING</h1>
+<h1>KR7 PERFORMANCE</h1>
+<div class="meta">META TOTAL: R$ 2.000.000,00</div>
 
-<div class="ranking-box">
+<div class="container">
 
-  <div class="ranking">
-    <h3>🏆 HYPE</h3>
-    <div id="rankingHype"></div>
+  <div class="box">
+    <h2>🏆 HYPE (META 1MM)</h2>
+    <div id="hype"></div>
   </div>
 
-  <div class="ranking">
-    <h3>🏆 OUTROS</h3>
-    <div id="rankingGeral"></div>
+  <div class="box">
+    <h2>🏆 OUTROS (META 1MM)</h2>
+    <div id="geral"></div>
   </div>
 
 </div>
+
+<div class="total" id="total">TOTAL: R$ 0,00</div>
 
 <div class="control">
   DAN <input id="d_h"> <input id="d_g">
@@ -79,47 +94,21 @@ input {
 
 <script>
 
-// 🔥 CONFIGURAÇÃO (JÁ CORRIGIDA)
 const supabaseUrl = "https://fjysqoqglqlpfxvxvvzt.supabase.co";
 const supabaseKey = "sb_publishable_5OYsGs28d5eh9pBbOTBa6Q_YepVgSYV";
 
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// FORMATAR
-function formatar(v){
+function moeda(v){
   return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 }
 
-// CONVERTER BR
-function parseBR(valor){
-  if(!valor) return 0;
-  return Number(valor.replace(/\./g,"").replace(",", ".")) || 0;
+function parse(v){
+  if(!v) return 0;
+  return Number(v.replace(/\./g,"").replace(",","."));
 }
 
-// SALVAR (AGORA FUNCIONANDO)
-async function salvar(corretores){
-
-  for(let i=0;i<corretores.length;i++){
-
-    let c = corretores[i];
-
-    const { error } = await supabase
-      .from("ranking")
-      .update({
-        hype: c.hype,
-        geral: c.geral
-      })
-      .eq("id", i+1);
-
-    if(error){
-      console.log("ERRO:", error);
-    } else {
-      console.log("SALVOU:", c.nome);
-    }
-  }
-}
-
-// CARREGAR
+// 🔥 CARREGAR
 async function carregar(){
 
   const { data, error } = await supabase
@@ -127,7 +116,7 @@ async function carregar(){
     .select("*");
 
   if(error){
-    console.log("ERRO AO CARREGAR:", error);
+    console.log(error);
     return;
   }
 
@@ -136,40 +125,56 @@ async function carregar(){
   }
 }
 
-// RENDER
+// 🔥 RENDER
 function render(lista){
 
   let pos=["🥇","🥈","🥉","4º","5º"];
 
-  let hypeRank=[...lista].sort((a,b)=>b.hype-a.hype);
-  let geralRank=[...lista].sort((a,b)=>b.geral-a.geral);
+  let hype = [...lista].sort((a,b)=>b.hype-a.hype);
+  let geral = [...lista].sort((a,b)=>b.geral-a.geral);
 
-  document.getElementById("rankingHype").innerHTML =
-    hypeRank.map((c,i)=><div class="rank-item">${pos[i]} ${c.nome} - ${formatar(c.hype)}</div>).join("");
+  document.getElementById("hype").innerHTML =
+    hype.map((c,i)=><div class="rank">${pos[i]} ${c.nome} - ${moeda(c.hype)}</div>).join("");
 
-  document.getElementById("rankingGeral").innerHTML =
-    geralRank.map((c,i)=><div class="rank-item">${pos[i]} ${c.nome} - ${formatar(c.geral)}</div>).join("");
+  document.getElementById("geral").innerHTML =
+    geral.map((c,i)=><div class="rank">${pos[i]} ${c.nome} - ${moeda(c.geral)}</div>).join("");
+
+  let total = lista.reduce((s,c)=>s+c.hype+c.geral,0);
+  document.getElementById("total").innerHTML = "TOTAL: " + moeda(total);
 }
 
-// BOTÃO
+// 🔥 SALVAR (CORRIGIDO)
 async function atualizar(){
 
-  let corretores = [
-    { nome:"DANIELLA", hype:parseBR(d_h.value), geral:parseBR(d_g.value) },
-    { nome:"EMANUEL", hype:parseBR(e_h.value), geral:parseBR(e_g.value) },
-    { nome:"FLÁVIO", hype:parseBR(f_h.value), geral:parseBR(f_g.value) },
-    { nome:"LUCIANO", hype:parseBR(l_h.value), geral:parseBR(l_g.value) },
-    { nome:"OLIVEIRA", hype:parseBR(o_h.value), geral:parseBR(o_g.value) }
+  let dados = [
+    parse(d_h.value), parse(d_g.value),
+    parse(e_h.value), parse(e_g.value),
+    parse(f_h.value), parse(f_g.value),
+    parse(l_h.value), parse(l_g.value),
+    parse(o_h.value), parse(o_g.value)
   ];
 
-  await salvar(corretores);
-  carregar();
+  let nomes = ["DANIELLA","EMANUEL","FLÁVIO","LUCIANO","OLIVEIRA"];
+
+  for(let i=0;i<5;i++){
+
+    let { error } = await supabase
+      .from("ranking")
+      .update({
+        hype: dados[i*2],
+        geral: dados[i*2+1]
+      })
+      .eq("id", i+1);
+
+    if(error){
+      console.log("ERRO:", error);
+    }
+  }
+
+  setTimeout(carregar,1000);
 }
 
-// ATUALIZA AUTOMATICO
-setInterval(carregar, 3000);
-
-// PRIMEIRA CARGA
+setInterval(carregar,3000);
 carregar();
 
 </script>
