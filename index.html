@@ -2,30 +2,20 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>KR7 Premium</title>
+<title>KR7 Ranking</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body {
   margin:0;
-  font-family:-apple-system, BlinkMacSystemFont;
+  font-family:-apple-system, sans-serif;
   background:#0d0d0d;
   color:#fff;
   text-align:center;
 }
 
-h1 {
-  font-size:42px;
-  margin-top:20px;
-}
-
-.meta {
-  font-size:18px;
-  color:#aaa;
-}
-
-.container {
-  margin-top:20px;
-}
+h1 { margin-top:20px; }
 
 .ranking-box {
   display:flex;
@@ -37,54 +27,12 @@ h1 {
   width:40%;
   background:#1a1a1a;
   border-radius:20px;
-  padding:25px;
-  box-shadow:0 0 20px rgba(0,0,0,0.5);
-}
-
-.ranking h3 {
-  font-size:26px;
-  margin-bottom:20px;
+  padding:20px;
 }
 
 .rank-item {
-  font-size:24px;
-  margin:12px 0;
-  transition:0.3s;
-}
-
-.rank-item:hover {
-  transform:scale(1.05);
-}
-
-.progress-bar {
-  height:12px;
-  background:#222;
-  border-radius:10px;
-  margin:10px 0;
-}
-
-.progress {
-  height:100%;
-  border-radius:10px;
-  background:linear-gradient(90deg,#fff,#777);
-  width:0%;
-  transition:0.5s;
-}
-
-.total {
-  font-size:26px;
-  margin-top:20px;
-}
-
-.toggle {
-  position:fixed;
-  bottom:10px;
-  right:10px;
-  background:#fff;
-  color:#000;
-  padding:10px;
-  border-radius:8px;
-  cursor:pointer;
+  font-size:20px;
+  margin:8px 0;
 }
 
 .control {
@@ -92,115 +40,137 @@ h1 {
   bottom:0;
   width:100%;
   background:#111;
-  padding:15px;
-  display:none;
+  padding:10px;
 }
 
 input {
-  width:90px;
-  padding:6px;
+  width:80px;
   margin:3px;
-  border-radius:6px;
-  border:none;
 }
 </style>
 </head>
 
 <body>
 
-<h1>KR7 PERFORMANCE</h1>
-<div class="meta">META TOTAL: R$ 2.000.000,00</div>
+<h1>KR7 RANKING</h1>
 
-<div class="container">
+<div class="ranking-box">
 
-  <div class="ranking-box">
-
-    <div class="ranking">
-      <h3>🏆 HYPE</h3>
-      <div class="progress-bar"><div class="progress" id="barHype"></div></div>
-      <div id="rankingHype"></div>
-    </div>
-
-    <div class="ranking">
-      <h3>🏆 OUTROS</h3>
-      <div class="progress-bar"><div class="progress" id="barGeral"></div></div>
-      <div id="rankingGeral"></div>
-    </div>
-
+  <div class="ranking">
+    <h3>🏆 HYPE</h3>
+    <div id="rankingHype"></div>
   </div>
 
-  <div class="total" id="total"></div>
+  <div class="ranking">
+    <h3>🏆 OUTROS</h3>
+    <div id="rankingGeral"></div>
+  </div>
 
 </div>
 
-<div class="toggle" onclick="toggleControl()">⚙️</div>
-
-<div class="control" id="control">
-
+<div class="control">
   DAN <input id="d_h"> <input id="d_g">
   EMA <input id="e_h"> <input id="e_g">
   FLA <input id="f_h"> <input id="f_g">
   LUC <input id="l_h"> <input id="l_g">
   OLI <input id="o_h"> <input id="o_g">
-
   <button onclick="atualizar()">Atualizar</button>
-
 </div>
 
 <script>
 
-const META_HYPE = 1000000;
-const META_GERAL = 1000000;
+// 🔥 CONFIGURAÇÃO (JÁ CORRIGIDA)
+const supabaseUrl = "https://fjysqoqglqlpfxvxvvzt.supabase.co";
+const supabaseKey = "sb_publishable_5OYsGs28d5eh9pBbOTBa6Q_YepVgSYV";
 
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+// FORMATAR
 function formatar(v){
   return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 }
 
-function toggleControl(){
-  let c = document.getElementById("control");
-  c.style.display = c.style.display === "none" ? "block" : "none";
+// CONVERTER BR
+function parseBR(valor){
+  if(!valor) return 0;
+  return Number(valor.replace(/\./g,"").replace(",", ".")) || 0;
 }
 
-function atualizar(){
+// SALVAR (AGORA FUNCIONANDO)
+async function salvar(corretores){
 
-  let corretores = [
-    { nome:"DANIELLA", hype:+d_h.value||0, geral:+d_g.value||0 },
-    { nome:"EMANUEL", hype:+e_h.value||0, geral:+e_g.value||0 },
-    { nome:"FLÁVIO", hype:+f_h.value||0, geral:+f_g.value||0 },
-    { nome:"LUCIANO", hype:+l_h.value||0, geral:+l_g.value||0 },
-    { nome:"OLIVEIRA", hype:+o_h.value||0, geral:+o_g.value||0 }
-  ];
+  for(let i=0;i<corretores.length;i++){
 
-  let total=0,hype=0,geral=0;
+    let c = corretores[i];
 
-  corretores.forEach(c=>{
-    total+=c.hype+c.geral;
-    hype+=c.hype;
-    geral+=c.geral;
-  });
+    const { error } = await supabase
+      .from("ranking")
+      .update({
+        hype: c.hype,
+        geral: c.geral
+      })
+      .eq("id", i+1);
 
-  document.getElementById("total").innerText = "TOTAL: " + formatar(total);
+    if(error){
+      console.log("ERRO:", error);
+    } else {
+      console.log("SALVOU:", c.nome);
+    }
+  }
+}
 
-  document.getElementById("barHype").style.width = (hype/META_HYPE*100)+"%";
-  document.getElementById("barGeral").style.width = (geral/META_GERAL*100)+"%";
+// CARREGAR
+async function carregar(){
 
-  let hypeRank=[...corretores].sort((a,b)=>b.hype-a.hype);
-  let geralRank=[...corretores].sort((a,b)=>b.geral-a.geral);
+  const { data, error } = await supabase
+    .from("ranking")
+    .select("*");
 
-  let htmlH="",htmlG="";
+  if(error){
+    console.log("ERRO AO CARREGAR:", error);
+    return;
+  }
+
+  if(data){
+    render(data);
+  }
+}
+
+// RENDER
+function render(lista){
+
   let pos=["🥇","🥈","🥉","4º","5º"];
 
-  hypeRank.forEach((c,i)=>{
-    htmlH+=`<div class="rank-item">${pos[i]} ${c.nome} - ${formatar(c.hype)}</div>`;
-  });
+  let hypeRank=[...lista].sort((a,b)=>b.hype-a.hype);
+  let geralRank=[...lista].sort((a,b)=>b.geral-a.geral);
 
-  geralRank.forEach((c,i)=>{
-    htmlG+=`<div class="rank-item">${pos[i]} ${c.nome} - ${formatar(c.geral)}</div>`;
-  });
+  document.getElementById("rankingHype").innerHTML =
+    hypeRank.map((c,i)=><div class="rank-item">${pos[i]} ${c.nome} - ${formatar(c.hype)}</div>).join("");
 
-  document.getElementById("rankingHype").innerHTML=htmlH;
-  document.getElementById("rankingGeral").innerHTML=htmlG;
+  document.getElementById("rankingGeral").innerHTML =
+    geralRank.map((c,i)=><div class="rank-item">${pos[i]} ${c.nome} - ${formatar(c.geral)}</div>).join("");
 }
+
+// BOTÃO
+async function atualizar(){
+
+  let corretores = [
+    { nome:"DANIELLA", hype:parseBR(d_h.value), geral:parseBR(d_g.value) },
+    { nome:"EMANUEL", hype:parseBR(e_h.value), geral:parseBR(e_g.value) },
+    { nome:"FLÁVIO", hype:parseBR(f_h.value), geral:parseBR(f_g.value) },
+    { nome:"LUCIANO", hype:parseBR(l_h.value), geral:parseBR(l_g.value) },
+    { nome:"OLIVEIRA", hype:parseBR(o_h.value), geral:parseBR(o_g.value) }
+  ];
+
+  await salvar(corretores);
+  carregar();
+}
+
+// ATUALIZA AUTOMATICO
+setInterval(carregar, 3000);
+
+// PRIMEIRA CARGA
+carregar();
 
 </script>
 
