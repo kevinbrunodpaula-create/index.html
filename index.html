@@ -2,45 +2,20 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>KR7 Performance</title>
+<title>KR7</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<style>
-body{background:#0b0b0b;color:#fff;font-family:Arial;text-align:center}
-.box{display:flex;justify-content:space-around;margin-top:40px}
-.col{width:40%;background:#1a1a1a;padding:20px;border-radius:20px}
-input{width:80px}
-.control{position:fixed;bottom:0;width:100%;background:#111;padding:10px}
-</style>
 </head>
 
-<body>
+<body style="background:black;color:white;text-align:center">
 
 <h1>KR7 PERFORMANCE</h1>
-<p>META TOTAL: R$ 2.000.000</p>
 
-<div class="box">
-  <div class="col">
-    <h2>HYPE</h2>
-    <div id="hype"></div>
-  </div>
-  <div class="col">
-    <h2>OUTROS</h2>
-    <div id="geral"></div>
-  </div>
-</div>
+<div id="hype"></div>
+<div id="geral"></div>
 
-<h3 id="total">TOTAL: R$ 0</h3>
-
-<div class="control">
-  DAN <input id="d_h"> <input id="d_g">
-  EMA <input id="e_h"> <input id="e_g">
-  FLA <input id="f_h"> <input id="f_g">
-  LUC <input id="l_h"> <input id="l_g">
-  OLI <input id="o_h"> <input id="o_g">
-  <button onclick="atualizar()">Atualizar</button>
-</div>
+<button onclick="atualizar()">Atualizar</button>
 
 <script>
 
@@ -49,60 +24,15 @@ const supabase = window.supabase.createClient(
   "sb_publishable_5OYsGs28d5eh9pBbOTBa6Q_YepVgSYV"
 );
 
-function moeda(v){
-  return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-}
-
-function parse(v){
-  if(!v) return 0;
-  return Number(v.replace(/\./g,"").replace(",","."));
-}
-
 async function carregar(){
   const { data } = await supabase.from("ranking").select("*");
-  if(data) render(data);
-}
-
-function render(lista){
-  let pos=["🥇","🥈","🥉","4º","5º"];
-
-  let h=[...lista].sort((a,b)=>b.hype-a.hype);
-  let g=[...lista].sort((a,b)=>b.geral-a.geral);
-
-  document.getElementById("hype").innerHTML =
-    h.map((c,i)=>${pos[i]} ${c.nome} - ${moeda(c.hype)}).join("<br>");
-
-  document.getElementById("geral").innerHTML =
-    g.map((c,i)=>${pos[i]} ${c.nome} - ${moeda(c.geral)}).join("<br>");
-
-  let total = lista.reduce((s,c)=>s+c.hype+c.geral,0);
-  document.getElementById("total").innerHTML = "TOTAL: " + moeda(total);
+  console.log("DADOS:", data);
 }
 
 async function atualizar(){
-
-  let valores = [
-    parse(d_h.value), parse(d_g.value),
-    parse(e_h.value), parse(e_g.value),
-    parse(f_h.value), parse(f_g.value),
-    parse(l_h.value), parse(l_g.value),
-    parse(o_h.value), parse(o_g.value)
-  ];
-
-  for(let i=0;i<5;i++){
-    await supabase
-      .from("ranking")
-      .update({
-        hype: valores[i*2],
-        geral: valores[i*2+1]
-      })
-      .eq("id", i+1);
-  }
-
-  setTimeout(carregar,1000);
+  console.log("BOTÃO FUNCIONANDO");
 }
 
-setInterval(carregar,3000);
 carregar();
 
 </script>
