@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>KR7</title>
@@ -12,10 +12,12 @@
 
 <h1>KR7 PERFORMANCE</h1>
 
-<div id="hype"></div>
-<div id="geral"></div>
+<div id="dados"></div>
 
-<button onclick="atualizar()">Atualizar</button>
+<br>
+
+<input id="valor" placeholder="Digite valor">
+<button onclick="salvar()">Atualizar</button>
 
 <script>
 
@@ -24,13 +26,37 @@ const supabase = window.supabase.createClient(
   "sb_publishable_5OYsGs28d5eh9pBbOTBa6Q_YepVgSYV"
 );
 
+// TESTE DE LEITURA
 async function carregar(){
-  const { data } = await supabase.from("ranking").select("*");
-  console.log("DADOS:", data);
+  const { data, error } = await supabase
+    .from("ranking")
+    .select("*");
+
+  if(error){
+    console.log("ERRO:", error);
+  }
+
+  document.getElementById("dados").innerHTML =
+    JSON.stringify(data);
 }
 
-async function atualizar(){
-  console.log("BOTÃO FUNCIONANDO");
+// TESTE DE ESCRITA
+async function salvar(){
+
+  let v = Number(document.getElementById("valor").value);
+
+  const { error } = await supabase
+    .from("ranking")
+    .update({ hype: v })
+    .eq("id", 1);
+
+  if(error){
+    console.log("ERRO AO SALVAR:", error);
+  } else {
+    alert("SALVOU!");
+  }
+
+  carregar();
 }
 
 carregar();
